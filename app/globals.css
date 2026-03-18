@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f2f4f6;
+  color: #111827;
+}
+
+input,
+button {
+  font-family:
+    "Pretendard",
+    -apple-system,
+    sans-serif;
+}

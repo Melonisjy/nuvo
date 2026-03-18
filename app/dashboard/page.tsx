@@ -1,119 +1,119 @@
-'use client';
-
-import { usePrivy } from '@privy-io/react-auth';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { base } from 'viem/chains';
-import { createPublicClient, formatEther, getAddress, http } from 'viem';
+"use client";
+import { usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { base } from "viem/chains";
+import { createPublicClient, formatEther, getAddress, http } from "viem";
 
 const baseClient = createPublicClient({
-    chain: base,
-    transport: http('https://mainnet.base.org'), // 공개 Base RPC
+  chain: base,
+  transport: http("https://mainnet.base.org"),
 });
 
 function formatEth4(value: bigint): string {
-    const raw = formatEther(value); // ex) "1.23456789"
-    const [intPart, decPart = ''] = raw.split('.');
-    return `${intPart}.${decPart.padEnd(4, '0').slice(0, 4)}`; // 소수점 4자리 고정
+  const raw = formatEther(value);
+  const [intPart, decPart = ""] = raw.split(".");
+  return `${intPart}.${decPart.padEnd(4, "0").slice(0, 4)}`;
 }
 
 export default function Dashboard() {
-    const { authenticated, ready, logout, user } = usePrivy();
-    const router = useRouter();
+  const { authenticated, ready, logout, user } = usePrivy();
+  const router = useRouter();
+  const [balanceEth, setBalanceEth] = useState<string | null>(null);
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 
-    const [balanceEth, setBalanceEth] = useState<string | null>(null);
-    const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  useEffect(() => {
+    if (ready && !authenticated) router.replace("/");
+  }, [ready, authenticated, router]);
 
-    useEffect(() => {
-        if (ready && !authenticated) {
-            router.replace('/');
-        }
-    }, [ready, authenticated, router]);
+  useEffect(() => {
+    const address = user?.wallet?.address;
+    if (!ready || !authenticated || !address) return;
 
-    useEffect(() => {
-        const address = user?.wallet?.address;
+    let cancelled = false;
+    const fetchBalance = async () => {
+      try {
+        setIsBalanceLoading(true);
+        const checksumAddress = getAddress(address);
+        const wei = await baseClient.getBalance({ address: checksumAddress });
+        if (!cancelled) setBalanceEth(formatEth4(wei));
+      } catch {
+        if (!cancelled) setBalanceEth(null);
+      } finally {
+        if (!cancelled) setIsBalanceLoading(false);
+      }
+    };
 
-        // 주소 없을 때 null-safe 처리
-        if (!ready || !authenticated || !address) {
-            setBalanceEth(null);
-            setIsBalanceLoading(false);
-            return;
-        }
+    void fetchBalance();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, authenticated, user?.wallet?.address]);
 
-        let cancelled = false;
+  if (!ready || !authenticated) return null;
 
-        const fetchBalance = async () => {
-            try {
-                setIsBalanceLoading(true);
+  return (
+    <main className="flex justify-center bg-[#F2F4F6] min-h-screen">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col">
+        {/* 상단 헤더 */}
+        <div className="flex justify-between items-center px-5 pt-14 pb-4">
+          <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
+          <button
+            onClick={logout}
+            className="text-[#6B7280] text-sm font-medium"
+          >
+            로그아웃
+          </button>
+        </div>
 
-                // 체크섬/유효성 보정
-                const checksumAddress = getAddress(address);
-                const wei = await baseClient.getBalance({ address: checksumAddress });
-                const formatted = formatEth4(wei);
+        {/* 인사말 */}
+        <div className="px-5 mb-4">
+          <p className="text-[#6B7280] text-sm">안녕하세요</p>
+          <h2 className="text-2xl font-bold text-[#111827] mt-0.5">
+            {user?.google?.name}님
+          </h2>
+        </div>
 
-                if (!cancelled) setBalanceEth(formatted);
-            } catch (error) {
-                console.error('Failed to fetch Base ETH balance:', error);
-                if (!cancelled) setBalanceEth(null);
-            } finally {
-                if (!cancelled) setIsBalanceLoading(false);
-            }
-        };
+        {/* 잔액 카드 */}
+        <div className="mx-4 bg-[#3182F6] rounded-3xl p-6 text-white shadow-lg">
+          <p className="text-sm font-medium opacity-80 mb-4">Base ETH 잔액</p>
+          <p className="text-4xl font-bold tracking-tight">
+            {isBalanceLoading
+              ? "불러오는 중..."
+              : `${balanceEth ?? "0.0000"} ETH`}
+          </p>
+          <p className="text-sm opacity-60 mt-2">Base Chain</p>
+        </div>
 
-        void fetchBalance();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [ready, authenticated, user?.wallet?.address]);
-
-    if (!ready || !authenticated) return null;
-
-    return (
-        <main className="flex justify-center bg-gray-50 min-h-screen">
-            <div className="w-full max-w-[390px] bg-white min-h-screen flex flex-col relative">
-                {/* 상단 */}
-                <div className="flex justify-between items-center px-6 pt-14 pb-2">
-                    <span className="text-gray-400 text-sm">안녕하세요</span>
-                    <button onClick={logout} className="text-gray-400 text-sm">
-                        로그아웃
-                    </button>
-                </div>
-
-                {/* 이름 */}
-                <div className="px-6 pb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">{user?.google?.name}</h2>
-                </div>
-
-                {/* 잔액 카드 */}
-                <div className="mx-4 bg-[#3182F6] rounded-3xl p-6 text-white">
-                    <p className="text-sm opacity-70 mb-3">총 자산</p>
-                    <p className="text-5xl font-bold tracking-tight">
-                        {isBalanceLoading ? '불러오는 중...' : `${balanceEth ?? '0.0000'} ETH`}
-                    </p>
-                    <p className="text-sm opacity-60 mt-2">≈ 0 원</p>
-                </div>
-
-                {/* 빠른 메뉴 */}
-                <div className="px-4 mt-6 grid grid-cols-2 gap-3">
-                    <button className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-2">
-                        <span className="text-2xl">↗</span>
-                        <span className="text-sm font-medium text-gray-700">보내기</span>
-                    </button>
-                    <button className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-2">
-                        <span className="text-2xl">↙</span>
-                        <span className="text-sm font-medium text-gray-700">받기</span>
-                    </button>
-                </div>
-
-                {/* 지갑 주소 */}
-                <div className="mx-4 mt-4 bg-gray-50 rounded-2xl p-4">
-                    <p className="text-xs text-gray-400 mb-1">내 지갑 주소</p>
-                    <p className="text-xs text-gray-600 font-mono truncate">
-                        {user?.wallet?.address ?? '지갑 생성 중...'}
-                    </p>
-                </div>
+        {/* 액션 버튼 */}
+        <div className="px-4 mt-4 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => router.push("/send")}
+            className="bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-transform"
+          >
+            <div className="w-10 h-10 bg-[#EFF6FF] rounded-full flex items-center justify-center">
+              <span className="text-[#3182F6] text-lg">↗</span>
             </div>
-        </main>
-    );
+            <span className="text-sm font-semibold text-[#111827]">보내기</span>
+          </button>
+          <button className="bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-transform">
+            <div className="w-10 h-10 bg-[#EFF6FF] rounded-full flex items-center justify-center">
+              <span className="text-[#3182F6] text-lg">↙</span>
+            </div>
+            <span className="text-sm font-semibold text-[#111827]">받기</span>
+          </button>
+        </div>
+
+        {/* 지갑 주소 카드 */}
+        <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
+          <p className="text-xs font-medium text-[#6B7280] mb-1.5">
+            내 지갑 주소
+          </p>
+          <p className="text-xs text-[#111827] font-mono truncate">
+            {user?.wallet?.address ?? "지갑 생성 중..."}
+          </p>
+        </div>
+      </div>
+    </main>
+  );
 }
