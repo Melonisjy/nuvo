@@ -2,12 +2,12 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { base } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { createPublicClient, formatEther, getAddress, http } from "viem";
 
 const baseClient = createPublicClient({
-  chain: base,
-  transport: http("https://mainnet.base.org"),
+  chain: baseSepolia,
+  transport: http("https://sepolia.base.org"),
 });
 
 function formatEth4(value: bigint): string {
@@ -76,13 +76,15 @@ export default function Dashboard() {
 
         {/* 잔액 카드 */}
         <div className="mx-4 bg-[#3182F6] rounded-3xl p-6 text-white shadow-lg">
-          <p className="text-sm font-medium opacity-80 mb-4">Base ETH 잔액</p>
+          <p className="text-sm font-medium opacity-80 mb-4">
+            Base Sepolia ETH 잔액
+          </p>
           <p className="text-4xl font-bold tracking-tight">
             {isBalanceLoading
               ? "불러오는 중..."
               : `${balanceEth ?? "0.0000"} ETH`}
           </p>
-          <p className="text-sm opacity-60 mt-2">Base Chain</p>
+          <p className="text-sm opacity-60 mt-2">Base Sepolia (테스트넷)</p>
         </div>
 
         {/* 액션 버튼 */}
