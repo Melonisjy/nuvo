@@ -3,14 +3,24 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { baseSepolia } from "viem/chains";
-import { createPublicClient, formatEther, getAddress, http } from "viem";
+import {
+  createPublicClient,
+  formatEther,
+  getAddress,
+  http,
+  parseEther,
+} from "viem";
 
 const baseClient = createPublicClient({
   chain: baseSepolia,
   transport: http("https://sepolia.base.org"),
 });
 
+const MIN_DISPLAY_WEI = parseEther("0.0001");
+
 function formatEth4(value: bigint): string {
+  if (value === BigInt(0)) return "0.0000";
+  if (value < MIN_DISPLAY_WEI) return "< 0.0001";
   const raw = formatEther(value);
   const [intPart, decPart = ""] = raw.split(".");
   return `${intPart}.${decPart.padEnd(4, "0").slice(0, 4)}`;
