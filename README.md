@@ -4,7 +4,7 @@
 
 구글 로그인 하나로 Web3 지갑을 만들고, 친구 닉네임으로 코인을 보내는 서비스
 
-[Live Demo](배포후추가) · [GitHub](https://github.com/Melonisjy/nuvo)
+[Live Demo](https://nuvo-pi.vercel.app/) · [GitHub](https://github.com/Melonisjy/nuvo)
 
 <img width="445" height="1006" alt="image" src="https://github.com/user-attachments/assets/d32be574-f16e-4ae6-9682-05e589597520" />
 
