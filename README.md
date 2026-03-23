@@ -6,6 +6,9 @@
 
 [Live Demo](배포후추가) · [GitHub](https://github.com/Melonisjy/nuvo)
 
+<img width="445" height="1006" alt="image" src="https://github.com/user-attachments/assets/d32be574-f16e-4ae6-9682-05e589597520" />
+
+
 ---
 
 ## 기획 배경
