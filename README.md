@@ -108,3 +108,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ---
 
 ## 개발 과정
+[1. 토스 같은 Web3 앱을 만들고 싶었다](https://velog.io/@meloncoder/%ED%86%A0%EC%8A%A4-%EA%B0%99%EC%9D%80-Web3-%EC%95%B1%EC%9D%84-%EB%A7%8C%EB%93%A4%EA%B3%A0-%EC%8B%B6%EC%97%88%EB%8B%A4)
+
+[2. Nuvo에서 닉네임으로 송금하기 (feat. sepolia testnet)](https://velog.io/@meloncoder/Nuvo%EC%97%90%EC%84%9C-%EB%8B%89%EB%84%A4%EC%9E%84%EC%9C%BC%EB%A1%9C-%EC%86%A1%EA%B8%88%ED%95%98%EA%B8%B0-feat.-sepolia-testnet)
