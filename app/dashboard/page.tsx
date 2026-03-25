@@ -27,10 +27,11 @@ function formatEth4(value: bigint): string {
 }
 
 export default function Dashboard() {
-  const { authenticated, ready, logout, user } = usePrivy();
+  const { authenticated, ready, user } = usePrivy();
   const router = useRouter();
   const [balanceEth, setBalanceEth] = useState<string | null>(null);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (ready && !authenticated) router.replace("/");
@@ -62,22 +63,58 @@ export default function Dashboard() {
 
   if (!ready || !authenticated) return null;
 
+  const walletAddress = user?.wallet?.address ?? "";
+  const shortenedAddress = walletAddress
+    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+    : "지갑 생성 중...";
+  type Transaction = {
+    hash: string;
+  };
+
+  // TODO: 실제 API/props 연동 시 transactions 배열을 교체
+  const transactions: Transaction[] = [];
+
+  const actionButtonClass =
+    "bg-[#f5f5f5] rounded-[8px] px-4 py-2 text-[14px] font-semibold text-[#111827]";
+
   return (
-    <main className="flex justify-center bg-[#F2F4F6] min-h-screen">
-      <div className="w-full max-w-[390px] min-h-screen flex flex-col">
+    <main className="flex justify-center bg-[#f5f5f5] min-h-screen">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col pb-10">
         {/* 상단 헤더 */}
         <div className="flex justify-between items-center px-5 pt-14 pb-4">
           <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
+
           <button
-            onClick={logout}
-            className="text-[#6B7280] text-sm font-medium"
+            type="button"
+            className="w-8 h-8 rounded-full bg-transparent shadow-none flex items-center justify-center"
+            aria-label="알림"
           >
-            로그아웃
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 17H9"
+                stroke="#111827"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M18.5 17C18.5 15.8954 18.5 15.3431 18.322 14.8765C18.1439 14.4098 17.8049 14.0208 17.1269 13.2427C16.4488 12.4647 16.1098 12.0756 15.9318 11.609C15.7538 11.1423 15.7538 10.5901 15.7538 9.48549V8.5C15.7538 6.29086 14.0069 4.5 11.5 4.5C8.99306 4.5 7.24619 6.29086 7.24619 8.5V9.48549C7.24619 10.5901 7.24619 11.1423 7.06819 11.609C6.89019 12.0756 6.55118 12.4647 5.87316 13.2427C5.19514 14.0208 4.85613 14.4098 4.67813 14.8765C4.50013 15.3431 4.50013 15.8954 4.50013 17"
+                stroke="#111827"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
         {/* 인사말 */}
-        <div className="px-5 mb-4">
+        <div className="px-5 mb-2">
           <p className="text-[#6B7280] text-sm">안녕하세요</p>
           <h2 className="text-2xl font-bold text-[#111827] mt-0.5">
             {user?.google?.name}님
@@ -85,46 +122,80 @@ export default function Dashboard() {
         </div>
 
         {/* 잔액 카드 */}
-        <div className="mx-4 bg-[#3182F6] rounded-3xl p-6 text-white shadow-lg">
-          <p className="text-sm font-medium opacity-80 mb-4">
-            Base Sepolia ETH 잔액
-          </p>
-          <p className="text-4xl font-bold tracking-tight">
-            {isBalanceLoading
-              ? "불러오는 중..."
-              : `${balanceEth ?? "0.0000"} ETH`}
-          </p>
-          <p className="text-sm opacity-60 mt-2">Base Sepolia (테스트넷)</p>
-        </div>
+        <section className="m-[12px] bg-white rounded-[16px] p-4 shadow-md border-0">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[16px] font-bold text-[#111827]">내 지갑</h3>
+          </div>
 
-        {/* 액션 버튼 */}
-        <div className="px-4 mt-4 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => router.push("/send")}
-            className="bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-transform"
-          >
-            <div className="w-10 h-10 bg-[#EFF6FF] rounded-full flex items-center justify-center">
-              <span className="text-[#3182F6] text-lg">↗</span>
-            </div>
-            <span className="text-sm font-semibold text-[#111827]">보내기</span>
-          </button>
-          <button className="bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-transform">
-            <div className="w-10 h-10 bg-[#EFF6FF] rounded-full flex items-center justify-center">
-              <span className="text-[#3182F6] text-lg">↙</span>
-            </div>
-            <span className="text-sm font-semibold text-[#111827]">받기</span>
-          </button>
-        </div>
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#E6F1FB] flex items-center justify-center">
+                <span className="text-[#378ADD] font-bold text-[11px]">ETH</span>
+              </div>
 
-        {/* 지갑 주소 카드 */}
-        <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-medium text-[#6B7280] mb-1.5">
-            내 지갑 주소
-          </p>
-          <p className="text-xs text-[#111827] font-mono truncate">
-            {user?.wallet?.address ?? "지갑 생성 중..."}
-          </p>
-        </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] text-[#aaa] font-medium">
+                  Base Sepolia ETH
+                </span>
+                  <span className="text-2xl font-bold text-[#111]">
+                  {isBalanceLoading
+                    ? "불러오는 중..."
+                    : `${balanceEth ?? "0.0000"} ETH`}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/send")}
+              className={actionButtonClass}
+            >
+              보내기
+            </button>
+          </div>
+
+          <div className="mt-4 border-t border-black/10" />
+
+          {/* 주소 */}
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <p className="text-[12px] text-[#111827] font-mono truncate">
+              {shortenedAddress}
+            </p>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (!walletAddress) return;
+                try {
+                  await navigator.clipboard.writeText(walletAddress);
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 1200);
+                } catch {
+                  // clipboard 접근 실패 시 조용히 종료 (UX는 추후 개선 가능)
+                }
+              }}
+              className={actionButtonClass}
+            >
+              {copied ? "복사됨" : "복사"}
+            </button>
+          </div>
+        </section>
+
+        {/* 트랜잭션 히스토리 카드 */}
+        <section className="m-[12px] bg-white rounded-[16px] p-4 shadow-md border-0 min-h-[170px] flex flex-col">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[16px] font-bold text-[#111827]">최근 거래</h3>
+          </div>
+
+          <div className="mt-4 flex-1 flex items-center justify-center">
+            {/* TODO: 실제 거래 목록 연결 (props 또는 API 연동 후 transactions 배열 교체) */}
+            {transactions.length === 0 ? (
+              <p className="text-center text-[14px] text-[#aaa]">
+                거래 내역이 없습니다
+              </p>
+            ) : null}
+          </div>
+        </section>
       </div>
     </main>
   );
