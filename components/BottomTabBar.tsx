@@ -104,10 +104,10 @@ export default function BottomTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-20 bg-white"
+      className="fixed bottom-0 left-1/2 z-20 w-full max-w-[390px] -translate-x-1/2 bg-white"
       style={{ borderTop: "0.5px solid #f0f0f0" }}
     >
-      <div className="mx-auto flex h-16 w-full max-w-[390px] items-center justify-around pb-safe">
+      <div className="flex h-16 w-full items-center justify-around pb-safe">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (

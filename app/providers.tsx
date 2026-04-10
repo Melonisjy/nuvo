@@ -23,10 +23,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 },
             }}
         >
-            <div className="pb-24">
-                {children}
+            <div className="min-h-screen bg-[#e5e5e5] flex justify-center">
+                <div className="relative min-h-screen w-full max-w-[390px] bg-[#f5f5f5]">
+                    <div className="pb-24">{children}</div>
+                    <BottomTabBar />
+                </div>
             </div>
-            <BottomTabBar />
         </PrivyProvider>
     );
 }
