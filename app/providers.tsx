@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import { baseSepolia } from 'viem/chains';
+import BottomTabBar from '@/components/BottomTabBar';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -22,7 +23,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 },
             }}
         >
-            {children}
+            <div className="pb-24">
+                {children}
+            </div>
+            <BottomTabBar />
         </PrivyProvider>
     );
 }
