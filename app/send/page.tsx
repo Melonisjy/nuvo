@@ -182,7 +182,7 @@ export default function SendPage() {
 
   return (
     <main className="flex justify-center bg-white min-h-screen">
-      <div className="w-full max-w-[390px] min-h-screen flex flex-col px-5 pt-6 pb-32">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col px-5 pt-6 pb-24">
         {/* 상단 뒤로가기 */}
         <div className="flex items-center gap-1 -ml-1 mb-6">
           <button
@@ -249,7 +249,7 @@ export default function SendPage() {
               )}
             </div>
 
-            <div className="fixed bottom-8 left-0 right-0 px-5">
+            <div className="fixed bottom-[64px] left-0 right-0 z-10 px-5">
               <div className="max-w-[390px] mx-auto">
                 <button
                   type="button"
@@ -319,7 +319,7 @@ export default function SendPage() {
               ) : null}
             </div>
 
-            <div className="fixed bottom-8 left-0 right-0 px-5">
+            <div className="fixed bottom-[64px] left-0 right-0 z-10 px-5">
               <div className="max-w-[390px] mx-auto">
                 <button
                   type="button"
@@ -354,7 +354,7 @@ export default function SendPage() {
               <p className="text-red-400 text-sm mb-4">{error}</p>
             ) : null}
 
-            <div className="fixed bottom-8 left-0 right-0 px-5">
+            <div className="fixed bottom-[64px] left-0 right-0 z-10 px-5">
               <div className="max-w-[390px] mx-auto flex gap-3">
                 <button
                   type="button"
