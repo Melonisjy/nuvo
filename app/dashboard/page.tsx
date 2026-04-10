@@ -2,6 +2,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTransactions, getDateLabel, getInitial } from "@/hooks/useTransactions";
 import { baseSepolia } from "viem/chains";
 import {
   createPublicClient,
@@ -61,18 +62,19 @@ export default function Dashboard() {
     };
   }, [ready, authenticated, user?.wallet?.address]);
 
-  if (!ready || !authenticated) return null;
-
   const walletAddress = user?.wallet?.address ?? "";
   const shortenedAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : "지갑 생성 중...";
-  type Transaction = {
-    hash: string;
-  };
+  const {
+    data: txData,
+    isLoading: isTransactionsLoading,
+    isError: isTransactionsError,
+  } = useTransactions(walletAddress);
+  const transactions = txData?.transactions ?? [];
+  const displayItems = txData?.displayItems ?? [];
 
-  // TODO: 실제 API/props 연동 시 transactions 배열을 교체
-  const transactions: Transaction[] = [];
+  if (!ready || !authenticated) return null;
 
   const actionButtonClass =
     "bg-[#f5f5f5] rounded-[8px] px-4 py-2 text-[14px] font-semibold text-[#111827]";
@@ -187,14 +189,73 @@ export default function Dashboard() {
             <h3 className="text-[16px] font-bold text-[#111827]">최근 거래</h3>
           </div>
 
-          <div className="mt-4 flex-1 flex items-center justify-center">
-            {/* TODO: 실제 거래 목록 연결 (props 또는 API 연동 후 transactions 배열 교체) */}
-            {transactions.length === 0 ? (
-              <p className="text-center text-[14px] text-[#aaa]">
-                거래 내역이 없습니다
+          {isTransactionsLoading ? (
+            <div className="mt-4 space-y-3">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="flex items-center justify-between animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#f0f0f0]" />
+                    <div>
+                      <div className="h-3 w-24 rounded bg-[#f0f0f0]" />
+                      <div className="h-3 w-14 rounded bg-[#f0f0f0] mt-2" />
+                    </div>
+                  </div>
+                  <div className="h-3 w-20 rounded bg-[#f0f0f0]" />
+                </div>
+              ))}
+            </div>
+          ) : isTransactionsError ? (
+            <div className="mt-4 flex-1 flex items-center justify-center">
+              <p className="text-center text-[14px] text-[#EF4444]">
+                거래 내역을 불러올 수 없습니다
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="mt-4 flex-1 flex items-center justify-center">
+              <p className="text-center text-[14px] text-[#aaa]">거래 내역이 없습니다</p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {transactions.map((tx, idx) => {
+                const counterpartyLabel = tx.isOutgoing
+                  ? displayItems[idx]?.toLabel
+                  : displayItems[idx]?.fromLabel;
+                const amountSign = tx.isOutgoing ? "-" : "+";
+                const amountColor = tx.isOutgoing ? "text-[#EF4444]" : "text-[#22C55E]";
+
+                return (
+                  <div key={tx.hash} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-[#E5E7EB] flex items-center justify-center shrink-0">
+                        <span className="text-[13px] font-semibold text-[#4B5563]">
+                          {getInitial(counterpartyLabel ?? "")}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[14px] text-[#111827] truncate">
+                          {counterpartyLabel}
+                        </p>
+                        <p className="text-[12px] text-[#9CA3AF]">
+                          {getDateLabel(tx.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className={`text-[14px] font-semibold ${amountColor}`}>
+                      {amountSign}
+                      {tx.value} ETH
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="mt-4 self-center text-[13px] text-[#6B7280] hover:text-[#111827] transition-colors"
+          >
+            전체 보기
+          </button>
         </section>
       </div>
     </main>
