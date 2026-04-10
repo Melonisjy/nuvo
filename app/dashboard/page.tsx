@@ -79,7 +79,7 @@ export default function Dashboard() {
 
   return (
     <main className="flex justify-center bg-[#f5f5f5] min-h-screen">
-      <div className="w-full max-w-[390px] min-h-screen flex flex-col pb-24">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col bg-[#f5f5f5] pb-24">
         {/* 상단 헤더 */}
         <div className="flex justify-between items-center px-5 pt-14 pb-4">
           <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
@@ -122,7 +122,7 @@ export default function Dashboard() {
         </div>
 
         {/* 잔액 카드 */}
-        <section className="m-[12px] bg-white rounded-[16px] p-4 shadow-md border-0">
+        <section className="m-[12px] rounded-[16px] bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="text-[16px] font-bold text-[#111827]">내 지갑</h3>
           </div>
@@ -154,7 +154,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="mt-4 border-t border-black/10" />
+          <div className="mt-4 h-px bg-black/10" />
 
           {/* 주소 */}
           <div className="mt-4 flex items-center justify-between gap-3">
@@ -182,7 +182,7 @@ export default function Dashboard() {
         </section>
 
         {/* 트랜잭션 히스토리 카드 */}
-        <section className="m-[12px] bg-white rounded-[16px] p-4 shadow-md border-0 min-h-[170px] flex flex-col">
+        <section className="m-[12px] min-h-[170px] rounded-[16px] bg-white p-4 shadow-sm flex flex-col">
           <div className="flex items-center justify-between">
             <h3 className="text-[16px] font-bold text-[#111827]">최근 거래</h3>
           </div>
