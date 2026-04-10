@@ -79,7 +79,7 @@ export default function Dashboard() {
 
   return (
     <main className="flex justify-center bg-[#f5f5f5] min-h-screen">
-      <div className="w-full max-w-[390px] min-h-screen flex flex-col pb-10">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col pb-24">
         {/* 상단 헤더 */}
         <div className="flex justify-between items-center px-5 pt-14 pb-4">
           <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
