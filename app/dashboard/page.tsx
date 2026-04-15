@@ -2,6 +2,13 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  formatEthValue,
+  getCounterpartyLabel,
+  getDateLabel,
+  getInitial,
+  useTransactions,
+} from "@/hooks/useTransactions";
 import { baseSepolia } from "viem/chains";
 import {
   createPublicClient,
@@ -32,6 +39,9 @@ export default function Dashboard() {
   const [balanceEth, setBalanceEth] = useState<string | null>(null);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const walletAddress = user?.wallet?.address;
+  const { displayItems, nicknameMap, isLoading, isError } =
+    useTransactions(walletAddress);
 
   useEffect(() => {
     if (ready && !authenticated) router.replace("/");
@@ -63,16 +73,11 @@ export default function Dashboard() {
 
   if (!ready || !authenticated) return null;
 
-  const walletAddress = user?.wallet?.address ?? "";
+  const safeWalletAddress = walletAddress ?? "";
   const shortenedAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : "지갑 생성 중...";
-  type Transaction = {
-    hash: string;
-  };
-
-  // TODO: 실제 API/props 연동 시 transactions 배열을 교체
-  const transactions: Transaction[] = [];
+  const recentTransactions = displayItems.slice(0, 3);
 
   const actionButtonClass =
     "bg-[#f5f5f5] rounded-[8px] px-4 py-2 text-[14px] font-semibold text-[#111827]";
@@ -117,7 +122,7 @@ export default function Dashboard() {
         <div className="px-5 mb-2">
           <p className="text-[#6B7280] text-sm">안녕하세요</p>
           <h2 className="text-2xl font-bold text-[#111827] mt-0.5">
-            {user?.google?.name}님
+            {/* {user?.google?.name}님 */}멜론님
           </h2>
         </div>
 
@@ -130,14 +135,16 @@ export default function Dashboard() {
           <div className="mt-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-[#E6F1FB] flex items-center justify-center">
-                <span className="text-[#378ADD] font-bold text-[11px]">ETH</span>
+                <span className="text-[#378ADD] font-bold text-[11px]">
+                  ETH
+                </span>
               </div>
 
               <div className="flex flex-col">
                 <span className="text-[11px] text-[#aaa] font-medium">
                   Base Sepolia ETH
                 </span>
-                  <span className="text-2xl font-bold text-[#111]">
+                <span className="text-2xl font-bold text-[#111]">
                   {isBalanceLoading
                     ? "불러오는 중..."
                     : `${balanceEth ?? "0.0000"} ETH`}
@@ -167,7 +174,7 @@ export default function Dashboard() {
               onClick={async () => {
                 if (!walletAddress) return;
                 try {
-                  await navigator.clipboard.writeText(walletAddress);
+                  await navigator.clipboard.writeText(safeWalletAddress);
                   setCopied(true);
                   window.setTimeout(() => setCopied(false), 1200);
                 } catch {
@@ -187,13 +194,102 @@ export default function Dashboard() {
             <h3 className="text-[16px] font-bold text-[#111827]">최근 거래</h3>
           </div>
 
-          <div className="mt-4 flex-1 flex items-center justify-center">
-            {/* TODO: 실제 거래 목록 연결 (props 또는 API 연동 후 transactions 배열 교체) */}
-            {transactions.length === 0 ? (
-              <p className="text-center text-[14px] text-[#aaa]">
-                거래 내역이 없습니다
-              </p>
-            ) : null}
+          <div className="mt-4 flex-1">
+            {isLoading ? (
+              <div className="flex flex-col gap-3">
+                {[0, 1, 2].map((idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-20 rounded bg-gray-200 animate-pulse" />
+                        <div className="h-2.5 w-14 rounded bg-gray-200 animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : isError ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-center text-[14px] text-[#aaa]">
+                  거래 내역을 불러올 수 없습니다
+                </p>
+              </div>
+            ) : recentTransactions.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-center text-[14px] text-[#aaa]">
+                  거래 내역이 없습니다
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3">
+                  {recentTransactions.map((tx) => {
+                    const counterpartyLabel = getCounterpartyLabel(
+                      tx,
+                      nicknameMap,
+                    );
+                    const amount = `${tx.isOutgoing ? "- " : "+ "}${formatEthValue(tx.value)}`;
+                    const isShortenedAddressLabel =
+                      counterpartyLabel.startsWith("0x");
+                    return (
+                      <div
+                        key={`${tx.hash}-${tx.timestamp}`}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-[#f5f5f5] flex items-center justify-center text-[12px] font-semibold text-[#111]">
+                            {isShortenedAddressLabel ? (
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#888"
+                                strokeWidth="2"
+                              >
+                                <path d="M20 12V22H4V12" />
+                                <path d="M22 7H2v5h20V7z" />
+                                <path d="M12 22V7" />
+                                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                              </svg>
+                            ) : (
+                              getInitial(counterpartyLabel)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[13px] text-[#111] truncate">
+                              {counterpartyLabel}
+                            </p>
+                            <p className="text-[11px] text-[#bbb]">
+                              {getDateLabel(tx.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                        <p
+                          className={`text-[13px] font-bold ${tx.isOutgoing ? "text-[#E24B4A]" : "text-[#1D9E75]"}`}
+                        >
+                          {amount}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {displayItems.length >= 3 ? (
+                  <div className="mt-4 border-t border-black/10 pt-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/history")}
+                      className="text-[13px] font-semibold text-[#6B7280]"
+                    >
+                      전체 보기
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </section>
       </div>
