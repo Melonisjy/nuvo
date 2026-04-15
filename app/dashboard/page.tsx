@@ -1,7 +1,7 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatEthValue,
   getCounterpartyLabel,
@@ -9,6 +9,7 @@ import {
   getInitial,
   useTransactions,
 } from "@/hooks/useTransactions";
+import { getUserByPrivyId } from "@/lib/users";
 import { baseSepolia } from "viem/chains";
 import {
   createPublicClient,
@@ -34,11 +35,15 @@ function formatEth4(value: bigint): string {
 }
 
 export default function Dashboard() {
-  const { authenticated, ready, user } = usePrivy();
+  const { authenticated, ready, user, logout } = usePrivy();
   const router = useRouter();
   const [balanceEth, setBalanceEth] = useState<string | null>(null);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [myNickname, setMyNickname] = useState("");
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const walletAddress = user?.wallet?.address;
   const { displayItems, nicknameMap, isLoading, isError } =
     useTransactions(walletAddress);
@@ -71,6 +76,44 @@ export default function Dashboard() {
     };
   }, [ready, authenticated, user?.wallet?.address]);
 
+  useEffect(() => {
+    if (!ready || !authenticated || !user?.id) return;
+    let cancelled = false;
+    const fetchNickname = async () => {
+      const row = await getUserByPrivyId(user.id);
+      if (cancelled) return;
+      setMyNickname(row?.nickname?.trim() ?? "");
+    };
+    void fetchNickname();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, authenticated, user?.id]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (!profileMenuRef.current?.contains(target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+    };
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timerId = window.setTimeout(() => {
+      setToastMessage("");
+    }, 1200);
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [toastMessage]);
+
   if (!ready || !authenticated) return null;
 
   const safeWalletAddress = walletAddress ?? "";
@@ -81,41 +124,99 @@ export default function Dashboard() {
 
   const actionButtonClass =
     "bg-[#f5f5f5] rounded-[8px] px-4 py-2 text-[14px] font-semibold text-[#111827]";
+  const profileInitial = (myNickname.trim()?.[0] ?? "U").toUpperCase();
 
   return (
     <main className="flex justify-center bg-[#f5f5f5] min-h-screen">
       <div className="w-full max-w-[390px] min-h-screen flex flex-col bg-[#f5f5f5] pb-24">
+        {toastMessage ? (
+          <div className="fixed top-6 left-1/2 z-50 -translate-x-1/2 rounded-[10px] bg-[#111827] px-3 py-2 text-[13px] text-white">
+            {toastMessage}
+          </div>
+        ) : null}
         {/* 상단 헤더 */}
         <div className="flex justify-between items-center px-5 pt-14 pb-4">
           <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
 
-          <button
-            type="button"
-            className="w-8 h-8 rounded-full bg-transparent shadow-none flex items-center justify-center"
-            aria-label="알림"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="relative flex items-center gap-2" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="w-8 h-8 rounded-full bg-transparent shadow-none flex items-center justify-center"
+              aria-label="알림"
             >
-              <path
-                d="M15 17H9"
-                stroke="#111827"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-              <path
-                d="M18.5 17C18.5 15.8954 18.5 15.3431 18.322 14.8765C18.1439 14.4098 17.8049 14.0208 17.1269 13.2427C16.4488 12.4647 16.1098 12.0756 15.9318 11.609C15.7538 11.1423 15.7538 10.5901 15.7538 9.48549V8.5C15.7538 6.29086 14.0069 4.5 11.5 4.5C8.99306 4.5 7.24619 6.29086 7.24619 8.5V9.48549C7.24619 10.5901 7.24619 11.1423 7.06819 11.609C6.89019 12.0756 6.55118 12.4647 5.87316 13.2427C5.19514 14.0208 4.85613 14.4098 4.67813 14.8765C4.50013 15.3431 4.50013 15.8954 4.50013 17"
-                stroke="#111827"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 17H9"
+                  stroke="#111827"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M18.5 17C18.5 15.8954 18.5 15.3431 18.322 14.8765C18.1439 14.4098 17.8049 14.0208 17.1269 13.2427C16.4488 12.4647 16.1098 12.0756 15.9318 11.609C15.7538 11.1423 15.7538 10.5901 15.7538 9.48549V8.5C15.7538 6.29086 14.0069 4.5 11.5 4.5C8.99306 4.5 7.24619 6.29086 7.24619 8.5V9.48549C7.24619 10.5901 7.24619 11.1423 7.06819 11.609C6.89019 12.0756 6.55118 12.4647 5.87316 13.2427C5.19514 14.0208 4.85613 14.4098 4.67813 14.8765C4.50013 15.3431 4.50013 15.8954 4.50013 17"
+                  stroke="#111827"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              aria-label="프로필 메뉴"
+              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center text-[12px] font-semibold text-[#111]"
+            >
+              {profileInitial}
+            </button>
+
+            {isProfileMenuOpen ? (
+              <div
+                className="absolute right-0 top-10 z-50 w-[176px] overflow-hidden rounded-[12px] bg-white shadow-md"
+                style={{ border: "0.5px solid #f0f0f0" }}
+              >
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      if (!myNickname) {
+                        setToastMessage("닉네임 정보를 찾을 수 없습니다");
+                        return;
+                      }
+                      const myLink = `https://nuvo-pi.vercel.app/send/${myNickname}`;
+                      await navigator.clipboard.writeText(myLink);
+                      setToastMessage("복사됐습니다");
+                    } catch {
+                      setToastMessage("복사에 실패했습니다");
+                    } finally {
+                      setIsProfileMenuOpen(false);
+                    }
+                  }}
+                  className="w-full px-4 py-3 text-left text-[14px] text-[#111]"
+                >
+                  내 링크 복사
+                </button>
+                <div style={{ borderTop: "0.5px solid #f0f0f0" }} />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsProfileMenuOpen(false);
+                    await logout();
+                    router.replace("/");
+                  }}
+                  className="w-full px-4 py-3 text-left text-[14px] text-[#E24B4A]"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* 인사말 */}
