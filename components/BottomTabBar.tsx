@@ -3,6 +3,8 @@
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getUserByPrivyId } from "@/lib/users";
 
 type TabItem = {
   label: string;
@@ -91,49 +93,128 @@ function ReceiveIcon({ active }: { active: boolean }) {
 }
 
 const tabs: TabItem[] = [
-  { label: "홈", href: "/dashboard", icon: (active) => <HomeIcon active={active} /> },
-  { label: "보내기", href: "/send", icon: (active) => <SendIcon active={active} /> },
-  { label: "받기", href: "/receive", icon: (active) => <ReceiveIcon active={active} /> },
+  {
+    label: "홈",
+    href: "/dashboard",
+    icon: (active) => <HomeIcon active={active} />,
+  },
+  {
+    label: "보내기",
+    href: "/send",
+    icon: (active) => <SendIcon active={active} />,
+  },
+  {
+    label: "받기",
+    href: "/receive",
+    icon: (active) => <ReceiveIcon active={active} />,
+  },
 ];
 
 export default function BottomTabBar() {
-  const { authenticated } = usePrivy();
+  const { authenticated, user } = usePrivy();
   const pathname = usePathname();
+  const [nickname, setNickname] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    if (!authenticated || !user?.id) return;
+
+    let cancelled = false;
+    const fetchNickname = async () => {
+      const row = await getUserByPrivyId(user.id);
+      if (cancelled) return;
+      setNickname(row?.nickname?.trim() ?? "");
+    };
+
+    void fetchNickname();
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, user?.id]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timerId = window.setTimeout(() => {
+      setToastMessage("");
+    }, 2000);
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [toastMessage]);
 
   if (!authenticated) return null;
+  if (pathname.startsWith("/send/")) return null;
 
   return (
-    <nav
-      className="fixed bottom-0 left-1/2 z-20 w-full max-w-[390px] -translate-x-1/2 bg-white"
-      style={{ borderTop: "0.5px solid #f0f0f0" }}
-    >
-      <div className="flex h-16 w-full items-center justify-around pb-safe">
-        {tabs.map((tab) => {
-          const active = pathname === tab.href;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className="flex flex-1 flex-col items-center justify-center gap-1"
-              aria-label={tab.label}
-            >
-              <div className="relative flex h-6 w-6 items-center justify-center">
-                {active ? (
-                  <span className="absolute -top-1 h-1 w-1 rounded-full bg-[#111111]" />
-                ) : null}
-                {tab.icon(active)}
-              </div>
-              <span
-                className={`text-[11px] leading-none ${
-                  active ? "text-[#111111]" : "text-[#bbbbbb]"
-                }`}
+    <>
+      {toastMessage ? (
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111] px-4 py-[10px] text-[14px] text-white">
+          {toastMessage}
+        </div>
+      ) : null}
+      <nav
+        className="fixed bottom-0 left-1/2 z-20 w-full max-w-[390px] -translate-x-1/2 bg-white"
+        style={{ borderTop: "0.5px solid #f0f0f0" }}
+      >
+        <div className="flex h-16 w-full items-center justify-around pb-safe">
+          {tabs.map((tab) => {
+            const active = pathname === tab.href;
+            if (tab.href === "/receive") {
+              return (
+                <button
+                  key={tab.href}
+                  type="button"
+                  className="flex flex-1 flex-col items-center justify-center gap-1"
+                  aria-label={tab.label}
+                  onClick={async () => {
+                    try {
+                      if (!nickname) {
+                        setToastMessage("닉네임 정보를 찾을 수 없습니다");
+                        return;
+                      }
+                      const myLink = `https://nuvo-pi.vercel.app/send/${nickname}`;
+                      await navigator.clipboard.writeText(myLink);
+                      setToastMessage("링크가 복사됐습니다");
+                    } catch {
+                      setToastMessage("복사에 실패했습니다");
+                    }
+                  }}
+                >
+                  <div className="relative flex h-6 w-6 items-center justify-center">
+                    {tab.icon(false)}
+                  </div>
+                  <span className="text-[11px] leading-none text-[#bbbbbb]">
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="flex flex-1 flex-col items-center justify-center gap-1"
+                aria-label={tab.label}
               >
-                {tab.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                <div className="relative flex h-6 w-6 items-center justify-center">
+                  {active ? (
+                    <span className="absolute -top-1 h-1 w-1 rounded-full bg-[#111111]" />
+                  ) : null}
+                  {tab.icon(active)}
+                </div>
+                <span
+                  className={`text-[11px] leading-none ${
+                    active ? "text-[#111111]" : "text-[#bbbbbb]"
+                  }`}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }
