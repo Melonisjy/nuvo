@@ -122,7 +122,7 @@ export default function Dashboard() {
         <div className="px-5 mb-2">
           <p className="text-[#6B7280] text-sm">안녕하세요</p>
           <h2 className="text-2xl font-bold text-[#111827] mt-0.5">
-            {/* {user?.google?.name}님 */}멜론님
+            {user?.google?.name}님
           </h2>
         </div>
 
