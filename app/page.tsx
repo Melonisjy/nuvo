@@ -14,9 +14,9 @@ export default function Home() {
     const redirect = async () => {
       const existing = await getUserByPrivyId(user!.id);
       if (existing) {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
-        router.push("/setup");
+        router.replace("/setup");
       }
     };
 
