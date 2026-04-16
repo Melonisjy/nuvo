@@ -3,8 +3,6 @@
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getUserByPrivyId } from "@/lib/users";
 
 type TabItem = {
   label: string;
@@ -111,47 +109,14 @@ const tabs: TabItem[] = [
 ];
 
 export default function BottomTabBar() {
-  const { authenticated, user } = usePrivy();
+  const { authenticated } = usePrivy();
   const pathname = usePathname();
-  const [nickname, setNickname] = useState("");
-  const [toastMessage, setToastMessage] = useState("");
-
-  useEffect(() => {
-    if (!authenticated || !user?.id) return;
-
-    let cancelled = false;
-    const fetchNickname = async () => {
-      const row = await getUserByPrivyId(user.id);
-      if (cancelled) return;
-      setNickname(row?.nickname?.trim() ?? "");
-    };
-
-    void fetchNickname();
-    return () => {
-      cancelled = true;
-    };
-  }, [authenticated, user?.id]);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timerId = window.setTimeout(() => {
-      setToastMessage("");
-    }, 2000);
-    return () => {
-      window.clearTimeout(timerId);
-    };
-  }, [toastMessage]);
 
   if (!authenticated) return null;
   if (pathname.startsWith("/send/")) return null;
 
   return (
     <>
-      {toastMessage ? (
-        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111] px-4 py-[10px] text-[14px] text-white">
-          {toastMessage}
-        </div>
-      ) : null}
       <nav
         className="fixed bottom-0 left-1/2 z-20 w-full max-w-[390px] -translate-x-1/2 bg-white"
         style={{ borderTop: "0.5px solid #f0f0f0" }}
@@ -159,37 +124,6 @@ export default function BottomTabBar() {
         <div className="flex h-16 w-full items-center justify-around pb-safe">
           {tabs.map((tab) => {
             const active = pathname === tab.href;
-            if (tab.href === "/receive") {
-              return (
-                <button
-                  key={tab.href}
-                  type="button"
-                  className="flex flex-1 flex-col items-center justify-center gap-1"
-                  aria-label={tab.label}
-                  onClick={async () => {
-                    try {
-                      if (!nickname) {
-                        setToastMessage("닉네임 정보를 찾을 수 없습니다");
-                        return;
-                      }
-                      const myLink = `https://nuvo-pi.vercel.app/send/${nickname}`;
-                      await navigator.clipboard.writeText(myLink);
-                      setToastMessage("링크가 복사됐습니다");
-                    } catch {
-                      setToastMessage("복사에 실패했습니다");
-                    }
-                  }}
-                >
-                  <div className="relative flex h-6 w-6 items-center justify-center">
-                    {tab.icon(false)}
-                  </div>
-                  <span className="text-[11px] leading-none text-[#bbbbbb]">
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            }
-
             return (
               <Link
                 key={tab.href}
