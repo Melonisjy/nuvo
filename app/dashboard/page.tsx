@@ -138,7 +138,10 @@ export default function Dashboard() {
         <div className="flex justify-between items-center px-5 pt-14 pb-4">
           <h1 className="text-xl font-bold text-[#111827]">Nuvo</h1>
 
-          <div className="relative flex items-center gap-2" ref={profileMenuRef}>
+          <div
+            className="relative flex items-center gap-2"
+            ref={profileMenuRef}
+          >
             <button
               type="button"
               className="w-8 h-8 rounded-full bg-transparent shadow-none flex items-center justify-center"
